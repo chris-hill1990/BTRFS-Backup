@@ -1,0 +1,19 @@
+# btrfs-backup configuration
+
+BACKUP_MOUNT="/mnt/backup"
+LOGFILE="/var/log/btrfs-backup.log"
+LOCAL_KEEP=3
+REMOTE_RETENTION_DAYS=365
+CACHE_DIR="/var/cache/btrfs-backup"
+CATALOG_WORKERS=4
+CATALOG_PROGRESS_INTERVAL=5000
+CATALOGD_INTERVAL="30m"
+
+VOLUME_NAMES=(root drive3 drive4 drive2)
+
+declare -Ag VOLUMES=(
+  ["root"]="/"
+  ["drive3"]="/mnt/drive3"
+  ["drive4"]="/mnt/drive4"
+  ["drive2"]="/mnt/drive2"
+)
