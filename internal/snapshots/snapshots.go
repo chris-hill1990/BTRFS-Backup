@@ -237,10 +237,17 @@ func remoteRetentionRecords(cfg config.AppConfig, volume config.Volume, now time
 		return nil, err
 	}
 
-	maxAge := time.Duration(cfg.RemoteRetentionDays+1) * 24 * time.Hour
+	// Received Btrfs subvolumes can retain the source directory's mtime, which
+	// says nothing about when the snapshot was made. Use the date in its name.
+	cutoff := now.AddDate(0, 0, -cfg.RemoteRetentionDays)
 	records := []Record{}
-	for _, info := range infos {
-		if now.Sub(info.ModTime) < maxAge {
+	for i, info := range infos {
+		// A backup target must always keep at least its newest snapshot.
+		if i == len(infos)-1 {
+			continue
+		}
+		date, err := time.ParseInLocation("2006-01-02", strings.TrimPrefix(info.Name, volume.Name+"-"), now.Location())
+		if err != nil || !date.Before(cutoff) {
 			continue
 		}
 		records = append(records, Record{

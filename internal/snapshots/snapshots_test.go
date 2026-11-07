@@ -62,18 +62,18 @@ func TestRetentionRecordsKeepsNewestLocalSnapshots(t *testing.T) {
 	}
 }
 
-func TestRetentionRecordsUsesRemoteSnapshotMtime(t *testing.T) {
+func TestRetentionRecordsUsesRemoteSnapshotDateAndKeepsNewest(t *testing.T) {
 	tmp := t.TempDir()
 	backupMount := filepath.Join(tmp, "backup")
 	remoteDir := filepath.Join(backupMount, "test")
 	oldPath := filepath.Join(remoteDir, "test-2026-04-01")
-	newPath := filepath.Join(remoteDir, "test-2026-04-30")
+	newPath := filepath.Join(remoteDir, "test-2026-05-01")
 	mkdirAll(t, oldPath)
 	mkdirAll(t, newPath)
 
 	now := time.Date(2026, 5, 2, 12, 0, 0, 0, time.UTC)
-	oldTime := now.Add(-3 * 24 * time.Hour)
-	newTime := now.Add(-24 * time.Hour)
+	oldTime := now.Add(-24 * time.Hour)
+	newTime := now.Add(-30 * 24 * time.Hour)
 	if err := os.Chtimes(oldPath, oldTime, oldTime); err != nil {
 		t.Fatal(err)
 	}
@@ -96,6 +96,16 @@ func TestRetentionRecordsUsesRemoteSnapshotMtime(t *testing.T) {
 	}
 	if records[0].Snapshot != "test-2026-04-01" || records[0].Path != oldPath {
 		t.Fatalf("unexpected retention record: %#v", records[0])
+	}
+	if err := os.RemoveAll(oldPath); err != nil {
+		t.Fatal(err)
+	}
+	records, err = RetentionRecords(cfg, "remote", "test", now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(records) != 0 {
+		t.Fatalf("newest remote snapshot must be retained: %#v", records)
 	}
 }
 

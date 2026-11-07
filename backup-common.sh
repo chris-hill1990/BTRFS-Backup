@@ -413,18 +413,5 @@ prune_remote_snapshots() {
     log "WARNING: backupctl retention failed for $name; falling back to shell retention."
   fi
 
-  while IFS= read -r -d '' old_snapshot; do
-    snapshot="$(basename -- "$old_snapshot")"
-    log "Deleting remote snapshot: $snapshot"
-    btrfs subvolume delete "$old_snapshot"
-    prune_catalog_snapshot "$name" "remote" "$snapshot"
-  done < <(
-    find "$backup_target" \
-      -mindepth 1 \
-      -maxdepth 1 \
-      -type d \
-      -name "$name-*" \
-      -mtime +"$REMOTE_RETENTION_DAYS" \
-      -print0
-  )
+  log "WARNING: Remote retention skipped because backupctl is unavailable; directory modification times are unsafe for Btrfs snapshots."
 }
